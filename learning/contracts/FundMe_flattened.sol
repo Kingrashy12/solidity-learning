@@ -1,7 +1,53 @@
 // SPDX-License-Identifier: MIT
+// File: @chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol
+
+
+pragma solidity ^0.8.0;
+
+// solhint-disable-next-line interface-starts-with-i
+interface AggregatorV3Interface {
+  function decimals() external view returns (uint8);
+
+  function description() external view returns (string memory);
+
+  function version() external view returns (uint256);
+
+  function getRoundData(
+    uint80 _roundId
+  ) external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
+
+  function latestRoundData()
+    external
+    view
+    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
+}
+
+// File: learning/lib/PriceConverter.sol
+
+
 pragma solidity ^0.8.18;
 
-import { PriceConverter } from "../lib/PriceConverter.sol";
+
+
+library PriceConverter {
+
+     function getPrice(address _contractAddress) internal view returns (uint256){
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(_contractAddress);
+        (,int price,,,) = priceFeed.latestRoundData();
+        return uint256(price * 1e10);
+    }
+
+    function getConversationRate(uint256 ethAmount, address _contractAddress) internal view returns (uint256){
+        uint256 ethPrice = getPrice(_contractAddress);
+        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;
+        return ethAmountInUsd;
+    }
+}
+// File: learning/contracts/FundMe.sol
+
+
+pragma solidity ^0.8.18;
+
 
 error NotOwner();
 
@@ -19,8 +65,8 @@ contract FundMe {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == i_owner,"Not authorized!");
-        // if(msg.sender != i_owner) revert NotOwner();
+        // require(msg.sender == i_owner,"Not authorized!");
+        if(msg.sender != i_owner) revert NotOwner();
         _;
     }
 
